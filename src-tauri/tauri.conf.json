@@ -4,10 +4,8 @@
   "version": "0.1.0",
   "identifier": "pink.pipes.desktop",
   "build": {
-    "frontendDist": "https://pipes.pink",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "frontendDist": "http://localhost:3000",
+    "devUrl": "http://localhost:3000"
   },
   "app": {
     "windows": [
