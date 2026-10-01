@@ -156,7 +156,7 @@ export default function BangIDE() {
       {
         role: "system",
         content: selectedHarness.isUnclaimed
-          ? `Installed Harness: ${selectedHarness.name} (pipe\\${selectedHarness.namespace})\n• Local Directory: ${localPath}\n• Token Debit: ${cost} PIPES Tokens (${userTokenBalance - cost} remaining in prepaid balance)\n• Compute Mode: Local on-prem CPU/GPU (FREE · 0 tokens)\n• Author Status: Unclaimed FOSS ($0.00 author payout · $0.25 platform retained as marketing opportunity proof · Claim at $48/yr or $36 in sats Year 1)`
+          ? `Installed Harness: ${selectedHarness.name} (pipe\\${selectedHarness.namespace})\n• Local Directory: ${localPath}\n• Token Debit: ${cost} PIPES Tokens (${userTokenBalance - cost} remaining in prepaid balance)\n• Compute Mode: Local on-prem CPU/GPU (FREE · 0 tokens)\n• Author Status: Unclaimed FOSS (Zero escrow during early launch · Yield tracked as an open invitation for author @${selectedHarness.author} to claim namespace & earn 79% royalties)`
           : `Installed Harness: ${selectedHarness.name} (pipe\\${selectedHarness.namespace})\n• Local Directory: ${localPath}\n• Token Debit: ${cost} PIPES Tokens (${selectedHarness.isChbFirstParty ? '50% First-Party CHB Discount' : 'Standard'})\n• Remaining Tokens: ${userTokenBalance - cost}\n• Compute Mode: Local on-prem CPU/GPU (FREE · 0 tokens)\n• Author Verified: Sovereign Pipe active ✓`,
       },
       {
@@ -344,7 +344,7 @@ export default function BangIDE() {
       ...prev,
       {
         role: "system",
-        content: `⚡ Dynamically Resolved & Attached: ${res.name} (pipe\\${res.namespace})\n• Debited from Subscription: ${cost} PIPES Tokens (${res.isChbFirstParty ? '50% First-Party CHB Discount' : 'Standard'})\n• Remaining Tokens: ${userTokenBalance - cost}\n• Compute Mode: Local on-prem CPU/GPU (FREE · 0 tokens)\n• Author Status: Unclaimed FOSS ($0.00 author payout · $0.25 platform retained as marketing opportunity proof · Claim at $48/yr or $36 in sats Year 1)`,
+        content: `⚡ Dynamically Resolved & Attached: ${res.name} (pipe\\${res.namespace})\n• Debited from Subscription: ${cost} PIPES Tokens (${res.isChbFirstParty ? '50% First-Party CHB Discount' : 'Standard'})\n• Remaining Tokens: ${userTokenBalance - cost}\n• Compute Mode: Local on-prem CPU/GPU (FREE · 0 tokens)\n• Author Status: Unclaimed FOSS (Zero escrow during early launch · Yield tracked as an open invitation for author @${res.author} to claim namespace & earn 79% royalties)`,
       },
       {
         role: "agent",
