@@ -5,7 +5,9 @@
   "identifier": "pink.pipes.desktop",
   "build": {
     "frontendDist": "http://localhost:3000",
-    "devUrl": "http://localhost:3000"
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "node scripts/tauri-before-dev.js",
+    "beforeBuildCommand": "npm run build"
   },
   "app": {
     "windows": [
@@ -22,7 +24,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http://localhost:8080 http://localhost:3000 ws://localhost:3000 https://*.pipes.pink https://pipes.pink https://*.clerk.accounts.dev https://api.clerk.com; img-src 'self' data: https:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:8080 http://localhost:3000 ws://localhost:3000 https://*.pipes.pink https://pipes.pink https://*.clerk.accounts.dev https://api.clerk.com; img-src 'self' data: https: http: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval';"
     }
   },
   "bundle": {

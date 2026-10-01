@@ -15,6 +15,13 @@ lazy_static::lazy_static! {
     static ref WATCHER: Mutex<Option<RecommendedWatcher>> = Mutex::new(None);
 }
 
+fn get_watcher_lock() -> std::sync::MutexGuard<'static, Option<RecommendedWatcher>> {
+    match WATCHER.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    }
+}
+
 #[tauri::command]
 pub async fn watch_local_folder(app: AppHandle, path: String) -> Result<String, String> {
     let watch_path = Path::new(&path).to_path_buf();
@@ -34,36 +41,25 @@ pub async fn watch_local_folder(app: AppHandle, path: String) -> Result<String, 
     let safe_watch_path = assert_safe_path(&watch_path)?;
 
     let app_clone = app.clone();
+    let (tx, rx) = std::sync::mpsc::channel();
     
-    // Stop any previous watcher before creating a new one
+    let mut watcher = match RecommendedWatcher::new(tx, Config::default()) {
+        Ok(w) => w,
+        Err(e) => return Err(format!("Failed to create watcher: {}", e)),
+    };
+
+    if let Err(e) = watcher.watch(safe_watch_path.as_path(), RecursiveMode::Recursive) {
+        return Err(format!("Failed to watch path: {}", e));
+    }
+
+    // Atomically replace the global watcher with the new active watcher (dropping previous safely)
     {
-        let mut global_watcher = WATCHER.lock().unwrap();
-        *global_watcher = None;
+        let mut global_watcher = get_watcher_lock();
+        *global_watcher = Some(watcher);
     }
     
-    // Set up the watcher in a separate thread so it doesn't block the Tauri runtime
+    // Listen for events in background thread (terminates cleanly when watcher is dropped)
     thread::spawn(move || {
-        let (tx, rx) = std::sync::mpsc::channel();
-        
-        let mut watcher = match RecommendedWatcher::new(tx, Config::default()) {
-            Ok(w) => w,
-            Err(e) => {
-                println!("Failed to create watcher: {}", e);
-                return;
-            }
-        };
-
-        if let Err(e) = watcher.watch(safe_watch_path.as_path(), RecursiveMode::Recursive) {
-            println!("Failed to watch path: {}", e);
-            return;
-        }
-
-        // Store the watcher in the global state to keep it alive
-        let mut global_watcher = WATCHER.lock().unwrap();
-        *global_watcher = Some(watcher);
-        drop(global_watcher);
-
-        // Listen for events
         for res in rx {
             match res {
                 Ok(event) => {
@@ -95,8 +91,8 @@ pub async fn watch_local_folder(app: AppHandle, path: String) -> Result<String, 
 
 #[tauri::command]
 pub fn stop_watching() -> Result<String, String> {
-    let mut watcher = WATCHER.lock().unwrap();
-    *watcher = None; // Dropping the watcher stops it
+    let mut watcher = get_watcher_lock();
+    *watcher = None; // Dropping the watcher closes tx and stops the thread
     Ok("Stopped watching folder".to_string())
 }
 
