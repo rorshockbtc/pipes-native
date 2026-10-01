@@ -77,5 +77,10 @@ npm run build
 
 ---
 
-## License
-MIT · Built with care by the Pipes Protocol community.
+## License & Intellectual Property
+
+Copyright © 2026 Kyle Cyree / Colon Hyphen Bracket. All rights reserved.
+
+Pipes Native is distributed as proprietary sovereign software. You are granted a free, non-exclusive license to download, install, and execute the compiled binaries on your personal or organization hardware for sovereign knowledge curation and software development. 
+
+Reverse engineering, decompilation, unauthorized commercial hosting of the Pipes protocol backend, or extraction of proprietary Merkle-DAG settlement algorithms is strictly prohibited. See [LICENSE](file:///Users/kyle/Developer/antigravity/pipes-native/LICENSE) for complete terms.

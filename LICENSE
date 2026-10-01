@@ -1,0 +1,42 @@
+PIPES SOVEREIGN SOFTWARE LICENSE & END USER COVENANT
+Copyright (c) 2026 Kyle Cyree / Colon Hyphen Bracket (CHB). All Rights Reserved.
+
+IMPORTANT NOTICE: PLEASE READ THIS LICENSE CAREFULLY BEFORE DOWNLOADING,
+INSTALLING, OR USING PIPES NATIVE OR ASSOCIATED DESKTOP UTILITIES.
+
+1. GRANT OF LICENSE
+Subject to the terms and restrictions set forth herein, Colon Hyphen Bracket
+grants you a revocable, non-exclusive, non-transferable, limited royalty-free
+license to download, install, and execute the compiled binary object code of
+Pipes Native on personal computers, laptops, and workstations owned or controlled
+by you solely for personal, research, archival, and sovereign curation purposes.
+
+2. PROPRIETARY RIGHTS & RESTRICTIONS
+The software, including but not limited to its architecture, source code,
+Merkle-DAG sync algorithms, Tap-Out protocol, AST transformation modules,
+microtoll settlement mechanisms, and brand assets, constitutes valuable trade
+secrets and proprietary intellectual property of Kyle Cyree / Colon Hyphen Bracket.
+
+You expressly agree that you shall NOT:
+(a) Modify, adapt, translate, reverse engineer, decompile, decrypt, or disassemble
+    the software or any portion thereof;
+(b) Sublicense, lease, rent, loan, redistribute, or commercially host the software
+    or any Pipes protocol backend services as a hosted cloud service without prior
+    written consent from Colon Hyphen Bracket;
+(c) Remove, alter, or obscure any proprietary notice, copyright notice, trademark,
+    or patent markings contained on or within the software;
+(d) Fork, copy, or extract proprietary algorithms for use in competing software
+    or retrieval frameworks.
+
+3. INTELLECTUAL CUSTODY OF USER CONTENT
+Nothing in this License grants Colon Hyphen Bracket any ownership rights over
+the content, documents, text, audio, or datasets you curate or anchor locally
+within your sovereign namespace (~/.pipes). You retain 100% custody and intellectual
+property over your sovereign nodes.
+
+4. DISCLAIMER OF WARRANTIES & LIMITATION OF LIABILITY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE.
