@@ -4,15 +4,17 @@
   "version": "0.1.0",
   "identifier": "pink.pipes.desktop",
   "build": {
-    "frontendDist": "http://localhost:3000",
+    "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "node scripts/tauri-before-dev.js",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": ""
   },
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Pipes",
+        "url": "https://www.pipes.pink/desktop/bang",
         "width": 1440,
         "height": 900,
         "minWidth": 1024,
