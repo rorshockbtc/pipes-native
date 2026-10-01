@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Compass, Hash, Terminal, BookOpen, Code2, Radio, Coins, ChevronLeft, PlusCircle, Workflow, FolderSync, FileText, CheckCircle2, LayoutDashboard, ChevronDown } from "lucide-react";
+import { Compass, Hash, Terminal, BookOpen, Code2, Radio, Coins, ChevronLeft, PlusCircle, Workflow, FolderSync, FileText, CheckCircle2, LayoutDashboard, ChevronDown, GraduationCap } from "lucide-react";
 
 export function DesktopSidebar() {
   const pathname = usePathname();
@@ -29,6 +29,7 @@ export function DesktopSidebar() {
 
   const workflows = [
     { name: "Folder Watcher (Sync)", href: "/desktop/workflows", icon: <FolderSync className="w-4 h-4" /> },
+    { name: "Co-Op & Classrooms", href: "/co-op", icon: <GraduationCap className="w-4 h-4 text-[#004f3b]" /> },
     { name: "Agency CMS Deploy", href: "/desktop/workflows", icon: <FileText className="w-4 h-4" /> },
     { name: "Curation Audit", href: "/desktop/workflows", icon: <CheckCircle2 className="w-4 h-4" /> },
   ];
