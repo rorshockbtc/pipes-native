@@ -1,0 +1,111 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "name": "Pipes Sovereign Design Tokens",
+  "version": "2.1.0",
+  "description": "Figma-optimized and developer-grade cross-chromatic ROYGBIV design tokens with 49-point WCAG AAA guarantee.",
+  "color": {
+    "canvas": {
+      "light": {
+        "default": { "$value": "#E8E2D5", "$type": "color", "$description": "Warm Sandstone Papyrus" },
+        "paper": { "$value": "#FAF8F5", "$type": "color", "$description": "Creamy Archival Linen" },
+        "card": { "$value": "#F3EFE9", "$type": "color", "$description": "Light Card Surface" },
+        "ink": { "$value": "#111827", "$type": "color", "$description": "Primary Deep Charcoal Ink" },
+        "inkMuted": { "$value": "#4B5563", "$type": "color", "$description": "Muted Slate Ink" },
+        "border": { "$value": "#11182726", "$type": "color", "$description": "15% Hairline Ink Border" }
+      },
+      "dark": {
+        "default": { "$value": "#222222", "$type": "color", "$description": "Obsidian Charcoal Base" },
+        "surface": { "$value": "#1A1A1A", "$type": "color", "$description": "Recessed Base Surface" },
+        "card": { "$value": "#262626", "$type": "color", "$description": "Elevated Obsidian Card" },
+        "ink": { "$value": "#FFFFFF", "$type": "color", "$description": "Pure White Text" },
+        "inkMuted": { "$value": "#A1A1AA", "$type": "color", "$description": "Muted Zinc Text" },
+        "border": { "$value": "#FFFFFF1F", "$type": "color", "$description": "12% White Hairline Border" }
+      }
+    },
+    "pastels": {
+      "blush": { "$value": "#F1DBDA", "$type": "color", "$description": "Red Band: Tactile Blush Pink" },
+      "peach": { "$value": "#F0D4B5", "$type": "color", "$description": "Orange Band: Apricot Warm Sand" },
+      "butter": { "$value": "#FFF5C9", "$type": "color", "$description": "Yellow Band: Pale Butter Cream" },
+      "sage": { "$value": "#DBECC8", "$type": "color", "$description": "Green Band: Pistachio / Sage Mint" },
+      "ice": { "$value": "#D4EBF5", "$type": "color", "$description": "Blue Band: Crystalline Ice Sky" },
+      "periwinkle": { "$value": "#E8E7FA", "$type": "color", "$description": "Indigo Band: Soft Lavender Periwinkle" },
+      "lilac": { "$value": "#ECD9FD", "$type": "color", "$description": "Violet Band: Electric Lilac Mist" }
+    },
+    "tonalDarks": {
+      "oxblood": { "$value": "#390502", "$type": "color", "$description": "Deep Crimson Oxblood" },
+      "leather": { "$value": "#402406", "$type": "color", "$description": "Antique Saddle Leather" },
+      "bronze": { "$value": "#3F3300", "$type": "color", "$description": "Dark Bronze Gold" },
+      "forest": { "$value": "#192E01", "$type": "color", "$description": "Deep Forest Pine" },
+      "abyss": { "$value": "#02212F", "$type": "color", "$description": "Deep Ocean Marine Abyss" },
+      "midnight": { "$value": "#040045", "$type": "color", "$description": "Celestial Midnight Royal" },
+      "plum": { "$value": "#18002E", "$type": "color", "$description": "Deep Aubergine Plum" }
+    },
+    "curatedCrossChromaticPairings": [
+      {
+        "name": "The Venetian",
+        "description": "Crystalline Ice Sky on Deep Crimson Oxblood",
+        "foreground": "#D4EBF5",
+        "background": "#390502",
+        "contrast": "14.21:1",
+        "wcag": "AAA Pass"
+      },
+      {
+        "name": "The Celestial",
+        "description": "Luminous Butter Cream on Celestial Midnight Royal",
+        "foreground": "#FFF5C9",
+        "background": "#040045",
+        "contrast": "17.56:1",
+        "wcag": "AAA Pass"
+      },
+      {
+        "name": "The Botanical Press",
+        "description": "Tactile Blush Pink on Deep Forest Pine",
+        "foreground": "#F1DBDA",
+        "background": "#192E01",
+        "contrast": "11.09:1",
+        "wcag": "AAA Pass"
+      },
+      {
+        "name": "The Alchemist",
+        "description": "Herbal Sage Mint on Deep Aubergine Plum",
+        "foreground": "#DBECC8",
+        "background": "#18002E",
+        "contrast": "15.62:1",
+        "wcag": "AAA Pass"
+      },
+      {
+        "name": "The Marine Coral",
+        "description": "Warm Apricot Peach on Deep Ocean Marine Abyss",
+        "foreground": "#F0D4B5",
+        "background": "#02212F",
+        "contrast": "11.73:1",
+        "wcag": "AAA Pass"
+      },
+      {
+        "name": "The Antiquarian",
+        "description": "Soft Periwinkle Lavender on Antique Saddle Leather",
+        "foreground": "#E8E7FA",
+        "background": "#402406",
+        "contrast": "11.71:1",
+        "wcag": "AAA Pass"
+      },
+      {
+        "name": "The Socratic",
+        "description": "Electric Lilac Mist on Deep Ocean Marine Abyss",
+        "foreground": "#ECD9FD",
+        "background": "#02212F",
+        "contrast": "12.62:1",
+        "wcag": "AAA Pass"
+      }
+    ]
+  },
+  "typography": {
+    "minimumFloorPx": 13,
+    "scales": {
+      "display": { "family": "Fraunces, serif", "weight": "600", "tracking": "0.15em" },
+      "subheading": { "family": "Inter, sans-serif", "weight": "400", "tracking": "0.3em" },
+      "body": { "family": "Inter, sans-serif", "weight": "400", "lineHeight": "1.6" },
+      "metadata": { "family": "JetBrains Mono, monospace", "weight": "600", "tracking": "0.2em" }
+    }
+  }
+}
