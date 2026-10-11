@@ -7,10 +7,18 @@ pub fn run() {
       workflows::watch_local_folder,
       workflows::stop_watching,
       workflows::read_local_file,
+      workflows::write_local_file,
       workflows::get_default_sync_folder,
+      workflows::list_workspace_files,
       workflows::hydrate_github_repo,
       workflows::provision_harness,
-      workflows::record_outbound_lead
+      workflows::record_outbound_lead,
+      workflows::detect_local_ai,
+      workflows::pull_local_model,
+      workflows::chat_local_ai,
+      workflows::terminal_run,
+      workflows::compute_merkle_tree,
+      workflows::transcribe_audio_file
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

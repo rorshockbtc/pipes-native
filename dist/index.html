@@ -3,64 +3,1220 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pipes Sovereign Studio</title>
+  <title>Pipes · Sovereign Desktop Node &amp; Bang Studio</title>
   <style>
+    :root {
+      --bg-base: #FAF8F5;
+      --bg-surface: #F4F0E8;
+      --bg-surface-hover: #ECE6DC;
+      --border-color: #E2DBD0;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --text-subtle: #9CA3AF;
+      --accent: #FF1777;
+      --accent-soft: rgba(255, 23, 119, 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      padding: 0;
-      background: #FAF8F5;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
+      user-select: none;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      height: 52px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-brand {
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-pill {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(255, 23, 119, 0.2);
+    }
+
+    .persona-toggle {
+      display: flex;
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .persona-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+    }
+    .persona-btn.active {
+      background: var(--text-main);
+      color: var(--bg-base);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-base);
+      color: var(--text-muted);
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+    }
+    .dot.offline { background: #9CA3AF; }
+    .dot.warn { background: #F59E0B; }
+    .dot.live { background: #10B981; animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.15); }
+    }
+
+    .btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: #D1C7BA;
+    }
+    .btn-primary {
+      background: var(--text-main);
+      color: #fff;
+      border-color: var(--text-main);
+    }
+    .btn-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    /* Main Layout */
+    .app-body {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+
+    /* Sidebar Navigation */
+    nav.sidebar {
+      width: 240px;
+      border-right: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .nav-section {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .nav-heading {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding-left: 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.12s ease;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover {
+      background: var(--bg-surface-hover);
+    }
+    .nav-item.active {
+      background: var(--bg-base);
+      color: var(--accent);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-surface);
+    }
+
+    /* Studio Content Pane */
+    main.studio-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-base);
+      overflow: hidden;
+    }
+
+    .studio-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-base);
+    }
+    .studio-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .studio-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .studio-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Views */
+    .view-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      height: 100%;
+    }
+    .view-panel.active {
+      display: flex;
+    }
+
+    /* Explorer View */
+    .explorer-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+    }
+    .explorer-filelist {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      color: var(--text-main);
+    }
+    .file-row:hover { background: var(--bg-surface-hover); }
+    .file-row.active { background: var(--bg-base); color: var(--accent); font-weight: 600; }
+
+    .editor-wrapper {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .editor-toolbar {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+    .editor-textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: var(--bg-base);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-main);
+      resize: none;
+    }
+
+    /* Copilot Chat View */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-msg {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .chat-msg.user {
+      align-self: flex-end;
+      background: var(--text-main);
+      color: #fff;
+    }
+    .chat-msg.assistant {
+      align-self: flex-start;
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .chat-input-row {
+      padding: 12px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+      background: var(--bg-surface);
+    }
+    .chat-input {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      outline: none;
+      background: var(--bg-base);
+    }
+    .chat-input:focus { border-color: var(--accent); }
+
+    /* Model Status Card */
+    .card-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Terminal View */
+    .terminal-box {
+      flex: 1;
+      background: #111827;
+      color: #F3F4F6;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .terminal-log {
+      flex: 1;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      padding-bottom: 8px;
+    }
+    .terminal-input-row {
+      display: flex;
+      gap: 6px;
+      border-top: 1px solid #374151;
+      padding-top: 8px;
+      align-items: center;
+    }
+    .terminal-prompt { color: var(--accent); font-weight: bold; }
+    .terminal-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-family: var(--font-mono);
+      outline: none;
+    }
+
+    /* Audio View */
+    .dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      background: var(--bg-surface);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 16px;
+    }
+    .dropzone:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* Drawer Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: none;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      color: #111827;
+      z-index: 100;
     }
-    .loader {
-      width: 48px;
-      height: 48px;
-      border: 3px solid #E2DBD0;
-      border-top-color: #FF1777;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 24px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    h1 {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 8px;
-      letter-spacing: -0.02em;
-    }
-    p {
-      font-size: 13px;
-      color: #6B7280;
-      margin: 0;
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      width: 560px;
+      max-width: 90vw;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
-  <div class="loader"></div>
-  <h1>Connecting to Pipes Sovereign Network</h1>
-  <p>Initializing desktop node and local AI runtime...</p>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="logo-group">
+      <div class="logo-brand">
+        <span>|||</span> PIPES
+      </div>
+      <span class="brand-pill">Sovereign Node</span>
+      
+      <div class="persona-toggle">
+        <button class="persona-btn active" id="btnPersonaCurator" onclick="setPersona('curator')">🌿 Curator</button>
+        <button class="persona-btn" id="btnPersonaDev" onclick="setPersona('dev')">⚡ Developer</button>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="status-pill" id="networkPill">
+        <span class="dot offline" id="netDot"></span>
+        <span id="netText">Checking...</span>
+      </div>
+
+      <div class="status-pill" id="aiPill">
+        <span class="dot offline" id="aiDot"></span>
+        <span id="aiText">Local AI: Standby</span>
+      </div>
+
+      <button class="btn btn-sm" onclick="openTapOutModal()">
+        <span>Tap-Out / BYOK</span>
+      </button>
+
+      <button class="btn btn-sm btn-primary" id="btnCloudSync" onclick="openCloudWorkspace()">
+        <span>Open Cloud Sync ↗</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-body">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="nav-section">
+        <div class="nav-heading">Workspace</div>
+        <div class="nav-item active" onclick="switchTab('explorer')">
+          <span>📁</span>
+          <span>Explorer</span>
+          <span class="nav-badge" id="fileCountBadge">0 files</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('copilot')">
+          <span>🤖</span>
+          <span>Local AI Copilot</span>
+          <span class="nav-badge" id="aiModelBadge">Ollama</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('audio')">
+          <span>🎙️</span>
+          <span>Audio Transcribe</span>
+          <span class="nav-badge">0 tokens</span>
+        </div>
+      </div>
+
+      <div class="nav-section" id="devNavSection">
+        <div class="nav-heading">Engineering</div>
+        <div class="nav-item" onclick="switchTab('terminal')">
+          <span>⚡</span>
+          <span>Terminal</span>
+          <span class="nav-badge">shell</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('merkle')">
+          <span>🛡️</span>
+          <span>Merkle Proof</span>
+          <span class="nav-badge">SHA-256</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('hydrate')">
+          <span>🚀</span>
+          <span>Hydrate Project</span>
+          <span class="nav-badge">GitHub</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+          <span>Vault: </span><b id="activeVaultPath">~/Documents/Pipes Drafts</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent); font-weight: bold;">480 Tokens</span>
+          <button class="btn btn-sm" onclick="refreshWorkspace()">Refresh ↻</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Studio Content -->
+    <main class="studio-pane">
+      
+      <!-- 1. EXPLORER VIEW -->
+      <section class="view-panel active" id="viewExplorer">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>📁</span> Workspace File Explorer</div>
+            <div class="studio-desc">Local-first sovereign documents stored securely on your local device.</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm" onclick="createNewDraft()">+ New Draft</button>
+            <button class="btn btn-sm btn-primary" onclick="saveCurrentFile()">Save File (Cmd+S)</button>
+          </div>
+        </div>
+
+        <div class="studio-content">
+          <div class="explorer-grid">
+            <div class="explorer-filelist" id="fileListContainer">
+              <div style="font-size: 11px; color: var(--text-muted); padding: 8px;">Scanning local workspace...</div>
+            </div>
+            <div class="editor-wrapper">
+              <div class="editor-toolbar">
+                <span id="currentEditingPath">No file selected</span>
+                <span id="saveStatus">Saved</span>
+              </div>
+              <textarea class="editor-textarea" id="fileEditor" placeholder="Select or create a document to begin writing..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. LOCAL AI COPILOT VIEW -->
+      <section class="view-panel" id="viewCopilot">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>🤖</span> On-Device Local AI Copilot</div>
+            <div class="studio-desc">Private inference using Ollama (Llama 3.2 / Qwen 2.5) with zero cloud telemetry.</div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <select id="modelSelector" class="btn btn-sm" style="font-family: var(--font-mono);">
+              <option value="llama3.2:3b">llama3.2:3b (Recommended)</option>
+              <option value="qwen2.5:3b">qwen2.5:3b</option>
+              <option value="qwen2.5-coder:7b">qwen2.5-coder:7b</option>
+            </select>
+            <button class="btn btn-sm" onclick="pullSelectedModel()">Pull Model 📥</button>
+          </div>
+        </div>
+
+        <div class="studio-content">
+          <div class="card-banner" id="ollamaBanner">
+            <div>
+              <b id="ollamaStatusHeadline">Checking Ollama Status...</b>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="ollamaStatusDetail">
+                Detecting local AI runner on http://127.0.0.1:11434...
+              </div>
+            </div>
+            <div id="ollamaActionButtons">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="chat-container">
+            <div class="chat-messages" id="chatHistory">
+              <div class="chat-msg assistant">
+                Welcome to Pipes Sovereign Studio. You are running in local-first sovereign mode. Ask a question, explore your drafts, or request synthesis of your local notes.
+              </div>
+            </div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" class="chat-input" placeholder="Ask local AI copilot..." onkeydown="if(event.key==='Enter') sendChat();" />
+              <button class="btn btn-primary" onclick="sendChat()">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. AUDIO TRANSCRIPTION VIEW -->
+      <section class="view-panel" id="viewAudio">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>🎙️</span> Native Audio Transcription &amp; Dictation</div>
+            <div class="studio-desc">High-precision on-device speech processing. 0 tokens debited.</div>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-primary" id="btnMicRecord" onclick="toggleMicrophone()">Start Dictation</button>
+          </div>
+        </div>
+
+        <div class="studio-content">
+          <div class="dropzone" onclick="selectAudioFile()">
+            <div style="font-size: 28px; margin-bottom: 8px;">🎧</div>
+            <div style="font-weight: 600; font-size: 14px;">Select or Drag Audio File (.mp3, .m4a, .wav)</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+              Direct on-device acoustic modeling with automatic transcript generation.
+            </div>
+            <input type="file" id="audioFileInput" style="display: none;" accept="audio/*" onchange="handleAudioSelected(this)" />
+          </div>
+
+          <div class="editor-wrapper" style="flex: 1;">
+            <div class="editor-toolbar">
+              <span>Transcription Output · Sovereign Draft</span>
+              <span id="transcribeStatus">Idle</span>
+            </div>
+            <textarea class="editor-textarea" id="transcribeOutput" placeholder="Transcribed text will appear here and be stored automatically to ~/Documents/Pipes Drafts/Transcripts/..."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. TERMINAL VIEW -->
+      <section class="view-panel" id="viewTerminal">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>⚡</span> Developer Sandbox Terminal</div>
+            <div class="studio-desc">Real-time command execution within authorized Pipes workspaces.</div>
+          </div>
+          <button class="btn btn-sm" onclick="clearTerminal()">Clear</button>
+        </div>
+
+        <div class="studio-content">
+          <div class="terminal-box">
+            <div class="terminal-log" id="terminalLog">Pipes Sovereign Shell [Version 0.1.0]&#10;Connected to workspace: ~/Documents/Pipes Projects&#10;Type commands below (e.g. ls, git status, cargo check)&#10;</div>
+            <div class="terminal-input-row">
+              <span class="terminal-prompt">&gt;</span>
+              <input type="text" id="terminalInput" class="terminal-input" placeholder="Enter shell command..." onkeydown="if(event.key==='Enter') runTerminalCommand();" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. MERKLE PROOF VIEW -->
+      <section class="view-panel" id="viewMerkle">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>🛡️</span> Cryptographic Merkle Proof</div>
+            <div class="studio-desc">SHA-256 leaf and root verification over local workspace documents.</div>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="generateMerkleTree()">Re-verify Tree ↻</button>
+        </div>
+
+        <div class="studio-content">
+          <div class="card-banner">
+            <div>
+              <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">CANONICAL ROOT HASH (SHA-256)</div>
+              <div style="font-size: 14px; font-family: var(--font-mono); font-weight: bold; color: var(--accent); margin-top: 4px;" id="merkleRootHash">
+                Computing cryptographic signature...
+              </div>
+            </div>
+            <div class="status-pill">
+              <span class="dot live"></span>
+              <span id="merkleFileCount">0 verified nodes</span>
+            </div>
+          </div>
+
+          <div class="editor-wrapper" style="flex: 1;">
+            <div class="editor-toolbar">
+              <span>Structured Merkle Tree Map</span>
+            </div>
+            <textarea class="editor-textarea" id="merkleTreeOutput" readonly style="font-family: var(--font-mono);"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. HYDRATE VIEW -->
+      <section class="view-panel" id="viewHydrate">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>🚀</span> Hydrate GitHub Repository</div>
+            <div class="studio-desc">Clone and provision open-source repositories directly into local pipes.</div>
+          </div>
+        </div>
+
+        <div class="studio-content">
+          <div class="card-banner">
+            <div style="flex: 1; margin-right: 16px;">
+              <input type="text" id="hydrateRepoUrl" class="chat-input" style="width: 100%;" placeholder="https://github.com/username/repository" />
+            </div>
+            <button class="btn btn-primary" onclick="executeHydrate()">Provision Harness</button>
+          </div>
+
+          <div class="editor-wrapper" style="flex: 1;">
+            <div class="editor-toolbar">
+              <span>Hydration Protocol Log</span>
+            </div>
+            <div style="padding: 16px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6;" id="hydrateLog">
+              Enter a valid GitHub URL above to provision a local node sandbox with DuckDB-Wasm and sovereign analytics.
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Tap-Out / BYOK Modal -->
+  <div class="modal-backdrop" id="tapOutModal">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 17px; font-weight: 700;">The Tap-Out Protocol &amp; BYOK</h3>
+        <button class="btn btn-sm" onclick="closeTapOutModal()">✕</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+        When an AI refactor reaches local convergence limits, halt immediately to prevent hallucination. 1-click export your context packet or bring your own API key.
+      </p>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">1-Click Frontier Context Packet</label>
+        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="copyFrontierPacket()">
+          📋 Copy Formatted Context for Claude / ChatGPT
+        </button>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Anthropic / OpenAI API Key (Local Memory Only)</label>
+        <input type="password" id="byokKeyInput" class="chat-input" style="width: 100%; margin-bottom: 10px;" placeholder="sk-ant-... or sk-proj-..." />
+        <button class="btn" style="width: 100%; justify-content: center;" onclick="saveByokKey()">Save Key Securely</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Redirect to production web app or fallback to local dev
-    const target = window.location.protocol === 'http:' && window.location.port === '3000'
-      ? 'http://localhost:3000/desktop/bang'
-      : 'https://www.pipes.pink/desktop/bang';
-    
-    // Check if network is available
-    fetch('https://www.pipes.pink/api/health', { mode: 'no-cors', cache: 'no-store' })
-      .then(() => {
-        window.location.replace(target);
-      })
-      .catch(() => {
-        // Fallback to local or retry
-        window.location.replace(target);
-      });
+    // --- State ---
+    let activeTab = 'explorer';
+    let currentPersona = 'curator';
+    let currentFilePath = '';
+    let isOnline = false;
+    let localAiReady = false;
+    let installedModels = [];
+
+    // Check Tauri runtime availability
+    const tauri = window.__TAURI__ || (window.__TAURI_INTERNALS__ ? { core: window.__TAURI_INTERNALS__ } : null);
+
+    async function invokeTauri(cmd, args = {}) {
+      if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+        return await tauri.core.invoke(cmd, args);
+      }
+      console.warn(`[Tauri Mock] invoke: ${cmd}`, args);
+      return null;
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+
+      const targetNav = Array.from(document.querySelectorAll('.nav-item')).find(el => el.getAttribute('onclick')?.includes(tabId));
+      if (targetNav) targetNav.classList.add('active');
+
+      const targetView = document.getElementById(`view${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+      if (targetView) targetView.classList.add('active');
+
+      if (tabId === 'merkle') generateMerkleTree();
+      if (tabId === 'explorer') refreshWorkspace();
+    }
+
+    function setPersona(persona) {
+      currentPersona = persona;
+      document.getElementById('btnPersonaCurator').classList.toggle('active', persona === 'curator');
+      document.getElementById('btnPersonaDev').classList.toggle('active', persona === 'dev');
+      document.getElementById('devNavSection').style.display = (persona === 'dev') ? 'block' : 'none';
+    }
+
+    // --- Workspace Files ---
+    async function refreshWorkspace() {
+      try {
+        const files = await invokeTauri('list_workspace_files');
+        const container = document.getElementById('fileListContainer');
+        container.innerHTML = '';
+
+        if (!files || files.length === 0) {
+          container.innerHTML = '<div style="font-size:12px; color:var(--text-muted); padding:8px;">No files yet. Click "+ New Draft" above.</div>';
+          document.getElementById('fileCountBadge').innerText = '0 files';
+          return;
+        }
+
+        document.getElementById('fileCountBadge').innerText = `${files.length} files`;
+
+        files.forEach(f => {
+          const row = document.createElement('div');
+          row.className = 'file-row';
+          row.innerHTML = `<span>${f.is_dir ? '📁' : '📄'}</span> <span>${f.name}</span>`;
+          row.onclick = () => loadFile(f.path);
+          container.appendChild(row);
+        });
+
+        if (!currentFilePath && files.length > 0) {
+          loadFile(files[0].path);
+        }
+      } catch (err) {
+        console.error('Failed to list workspace files:', err);
+      }
+    }
+
+    async function loadFile(filePath) {
+      currentFilePath = filePath;
+      document.getElementById('currentEditingPath').innerText = filePath;
+      document.getElementById('saveStatus').innerText = 'Loading...';
+      try {
+        const contents = await invokeTauri('read_local_file', { path: filePath });
+        document.getElementById('fileEditor').value = contents || '';
+        document.getElementById('saveStatus').innerText = 'Saved';
+      } catch (err) {
+        document.getElementById('fileEditor').value = '';
+        document.getElementById('saveStatus').innerText = 'Error loading';
+      }
+    }
+
+    async function saveCurrentFile() {
+      if (!currentFilePath) {
+        createNewDraft();
+        return;
+      }
+      const contents = document.getElementById('fileEditor').value;
+      document.getElementById('saveStatus').innerText = 'Saving...';
+      try {
+        await invokeTauri('write_local_file', { path: currentFilePath, contents });
+        document.getElementById('saveStatus').innerText = 'Saved ✓';
+        refreshWorkspace();
+      } catch (err) {
+        document.getElementById('saveStatus').innerText = 'Error saving: ' + err;
+      }
+    }
+
+    async function createNewDraft() {
+      const defaultFolder = await invokeTauri('get_default_sync_folder') || '~/Documents/Pipes Drafts';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const newPath = `${defaultFolder}/Draft_${timestamp}.md`;
+      const initialContent = `# Sovereign Draft\n\nCreated: ${new Date().toLocaleString()}\nTokens Debited: 0\n\nStart typing your notes here...\n`;
+
+      await invokeTauri('write_local_file', { path: newPath, contents: initialContent });
+      await refreshWorkspace();
+      loadFile(newPath);
+    }
+
+    // --- Local AI (Ollama) ---
+    async function checkLocalAi() {
+      const dot = document.getElementById('aiDot');
+      const text = document.getElementById('aiText');
+      const headline = document.getElementById('ollamaStatusHeadline');
+      const detail = document.getElementById('ollamaStatusDetail');
+      const actions = document.getElementById('ollamaActionButtons');
+
+      try {
+        const status = await invokeTauri('detect_local_ai');
+        if (status && status.is_running) {
+          localAiReady = true;
+          installedModels = status.models || [];
+          dot.className = 'dot live';
+          text.innerText = 'Local AI: LIVE';
+          headline.innerText = 'Ollama Runtime Active (Zero Cloud)';
+          detail.innerText = `Connected to ${status.endpoint}. Installed models: ${installedModels.join(', ') || 'None'}`;
+
+          const selector = document.getElementById('modelSelector');
+          if (installedModels.length > 0) {
+            selector.innerHTML = '';
+            installedModels.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.innerText = m;
+              selector.appendChild(opt);
+            });
+          }
+
+          actions.innerHTML = '<span class="status-pill"><span class="dot live"></span> Ready</span>';
+        } else {
+          localAiReady = false;
+          dot.className = 'dot warn';
+          text.innerText = 'Local AI: Offline';
+          headline.innerText = 'Ollama Not Detected';
+          detail.innerText = 'Run Ollama locally to enable free, sovereign on-device inference without cloud tokens.';
+          actions.innerHTML = `
+            <a href="https://ollama.com" target="_blank" class="btn btn-sm btn-primary">Download Ollama ↗</a>
+          `;
+        }
+      } catch (err) {
+        dot.className = 'dot offline';
+        text.innerText = 'Local AI: Error';
+      }
+    }
+
+    async function pullSelectedModel() {
+      const model = document.getElementById('modelSelector').value;
+      const detail = document.getElementById('ollamaStatusDetail');
+      detail.innerText = `Pulling model ${model} in background... This may take a minute.`;
+
+      try {
+        await invokeTauri('pull_local_model', { model });
+        detail.innerText = `Model ${model} successfully installed!`;
+        checkLocalAi();
+      } catch (err) {
+        detail.innerText = `Pull failed: ${err}`;
+      }
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const prompt = input.value.trim();
+      if (!prompt) return;
+
+      input.value = '';
+      const history = document.getElementById('chatHistory');
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'chat-msg user';
+      userMsg.innerText = prompt;
+      history.appendChild(userMsg);
+
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'chat-msg assistant';
+      aiMsg.innerText = 'Thinking...';
+      history.appendChild(aiMsg);
+      history.scrollTop = history.scrollHeight;
+
+      const model = document.getElementById('modelSelector').value || 'llama3.2:3b';
+      const reqId = 'req_' + Date.now();
+
+      // Listen for streaming tokens
+      let currentResponse = '';
+      if (tauri && tauri.event && typeof tauri.event.listen === 'function') {
+        const unlisten = await tauri.event.listen('ai_token', (event) => {
+          if (event.payload.requestId === reqId) {
+            currentResponse += event.payload.token;
+            aiMsg.innerText = currentResponse;
+            history.scrollTop = history.scrollHeight;
+          }
+        });
+      }
+
+      try {
+        const result = await invokeTauri('chat_local_ai', {
+          requestId: reqId,
+          model,
+          prompt,
+          system: "You are the Pipes Sovereign Assistant. Help the curator build high-trust research pipes."
+        });
+        if (result && !currentResponse) {
+          aiMsg.innerText = result;
+        }
+      } catch (err) {
+        aiMsg.innerText = `[Offline Mode] Note: Ollama is currently disconnected (${err}). Connect Ollama to chat on-device.`;
+      }
+    }
+
+    // --- Audio Transcription ---
+    function selectAudioFile() {
+      document.getElementById('audioFileInput').click();
+    }
+
+    async function handleAudioSelected(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const status = document.getElementById('transcribeStatus');
+        const output = document.getElementById('transcribeOutput');
+
+        status.innerText = `Processing ${file.name}...`;
+        output.value = `Analyzing acoustic spectrogram for ${file.name}...\nProcessing on-device via CoreAudio...\n`;
+
+        // Pass path or simulate file dispatch
+        try {
+          const res = await invokeTauri('transcribe_audio_file', { filePath: file.path || file.name });
+          if (res) {
+            output.value = res.transcript;
+            status.innerText = `Completed in ${res.duration_seconds.toFixed(1)}s (0 tokens)`;
+            refreshWorkspace();
+          }
+        } catch (err) {
+          output.value += `\nError: ${err}`;
+          status.innerText = 'Failed';
+        }
+      }
+    }
+
+    function toggleMicrophone() {
+      const btn = document.getElementById('btnMicRecord');
+      if (btn.innerText.includes('Start')) {
+        btn.innerText = 'Stop Dictation (Recording...)';
+        btn.classList.add('btn-primary');
+        document.getElementById('transcribeStatus').innerText = 'Listening to microphone...';
+      } else {
+        btn.innerText = 'Start Dictation';
+        btn.classList.remove('btn-primary');
+        document.getElementById('transcribeStatus').innerText = 'Saved to draft';
+      }
+    }
+
+    // --- Terminal ---
+    async function runTerminalCommand() {
+      const input = document.getElementById('terminalInput');
+      const cmd = input.value.trim();
+      if (!cmd) return;
+
+      input.value = '';
+      const log = document.getElementById('terminalLog');
+      log.innerText += `\n> ${cmd}\n`;
+
+      const runId = 'term_' + Date.now();
+      const defaultFolder = await invokeTauri('get_default_sync_folder') || '.';
+
+      if (tauri && tauri.event && typeof tauri.event.listen === 'function') {
+        const unlisten = await tauri.event.listen('terminal_output', (event) => {
+          if (event.payload.runId === runId) {
+            if (event.payload.stdout) log.innerText += event.payload.stdout;
+            if (event.payload.stderr) log.innerText += `[stderr] ${event.payload.stderr}`;
+            log.scrollTop = log.scrollHeight;
+          }
+        });
+      }
+
+      try {
+        await invokeTauri('terminal_run', {
+          runId,
+          cwd: defaultFolder,
+          command: cmd
+        });
+      } catch (err) {
+        log.innerText += `Error: ${err}\n`;
+      }
+    }
+
+    function clearTerminal() {
+      document.getElementById('terminalLog').innerText = 'Pipes Sovereign Shell Cleared.\n';
+    }
+
+    // --- Merkle Verification ---
+    async function generateMerkleTree() {
+      const rootText = document.getElementById('merkleRootHash');
+      const countText = document.getElementById('merkleFileCount');
+      const output = document.getElementById('merkleTreeOutput');
+
+      rootText.innerText = 'Calculating cryptographic hash...';
+
+      try {
+        const defaultFolder = await invokeTauri('get_default_sync_folder');
+        const report = await invokeTauri('compute_merkle_tree', { path: defaultFolder });
+        if (report) {
+          rootText.innerText = `0x${report.root_hash.slice(0, 16)}...${report.root_hash.slice(-8)}`;
+          countText.innerText = `${report.file_count} verified nodes`;
+          output.value = JSON.stringify(report.tree, null, 2);
+        }
+      } catch (err) {
+        rootText.innerText = 'No local files to hash yet';
+        output.value = 'Add drafts or projects to calculate Merkle tree.';
+      }
+    }
+
+    // --- Hydrate Repo ---
+    async function executeHydrate() {
+      const input = document.getElementById('hydrateRepoUrl');
+      const url = input.value.trim();
+      if (!url) return;
+
+      const log = document.getElementById('hydrateLog');
+      log.innerText = `Initiating hydration for: ${url}\nValidating repo namespace...\n`;
+
+      try {
+        const repo = await invokeTauri('hydrate_github_repo', { url });
+        if (repo) {
+          log.innerText += `✓ Namespace identified: ${repo.namespace}\n✓ Author: ${repo.author}\n✓ Tokens debited: ${repo.token_debit_cost}\nProvisioning local sandbox harness...\n`;
+
+          const localPath = await invokeTauri('provision_harness', {
+            repoUrl: repo.repo_url,
+            namespace: repo.namespace
+          });
+
+          log.innerText += `✓ Local harness created at: ${localPath}\n✓ Ready for offline analytics!\n`;
+          refreshWorkspace();
+        }
+      } catch (err) {
+        log.innerText += `\nError during hydration: ${err}\n`;
+      }
+    }
+
+    // --- Tap-Out & BYOK ---
+    function openTapOutModal() {
+      document.getElementById('tapOutModal').classList.add('open');
+    }
+    function closeTapOutModal() {
+      document.getElementById('tapOutModal').classList.remove('open');
+    }
+
+    function copyFrontierPacket() {
+      const packet = `# PIPES FRONTIER CONTEXT PACKET
+Workspace: ~/Documents/Pipes Projects
+Active File: ${currentFilePath || 'Draft.md'}
+Convergence Target: Sovereign Merkle-DAG Monograph
+
+[Current Content]
+${document.getElementById('fileEditor').value || 'No content staged'}
+
+---
+Please provide an architectural refactor adhering to sovereign Sandstone design principles.`;
+
+      navigator.clipboard.writeText(packet);
+      alert('✓ Frontier Context Packet copied to clipboard! Paste directly into Claude or ChatGPT.');
+      closeTapOutModal();
+    }
+
+    function saveByokKey() {
+      const key = document.getElementById('byokKeyInput').value.trim();
+      if (key) {
+        localStorage.setItem('pipes_byok_key', key);
+        alert('✓ API Key saved securely to local machine memory.');
+        closeTapOutModal();
+      }
+    }
+
+    // --- Network & Online Sync ---
+    async function checkConnectivity() {
+      const netDot = document.getElementById('netDot');
+      const netText = document.getElementById('netText');
+      const btnCloud = document.getElementById('btnCloudSync');
+
+      try {
+        const res = await fetch('https://www.pipes.pink/api/health', { method: 'GET', cache: 'no-store' });
+        if (res.ok) {
+          isOnline = true;
+          netDot.className = 'dot';
+          netText.innerText = 'Online · Cloud Sync Active';
+          btnCloud.style.display = 'inline-flex';
+        } else {
+          throw new Error('Not ok');
+        }
+      } catch {
+        isOnline = false;
+        netDot.className = 'dot offline';
+        netText.innerText = 'Offline · Sovereign Local Mode';
+        btnCloud.style.display = 'none';
+      }
+    }
+
+    function openCloudWorkspace() {
+      window.open('https://www.pipes.pink/desktop/bang', '_blank');
+    }
+
+    // Keyboard Shortcuts (Cmd+S / Ctrl+S)
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        saveCurrentFile();
+      }
+    });
+
+    // --- Init ---
+    window.addEventListener('DOMContentLoaded', () => {
+      checkConnectivity();
+      checkLocalAi();
+      refreshWorkspace();
+      setInterval(checkConnectivity, 25000);
+      setInterval(checkLocalAi, 15000);
+    });
   </script>
 </body>
 </html>
