@@ -25,6 +25,9 @@ pub fn run() {
       workflows::detect_local_ai,
       workflows::pull_local_model,
       workflows::chat_local_ai,
+      workflows::save_project_snapshot,
+      workflows::list_project_snapshots,
+      workflows::restore_project_snapshot,
       workflows::terminal_run,
       workflows::compute_merkle_tree,
       workflows::transcribe_audio_file

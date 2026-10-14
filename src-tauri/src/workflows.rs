@@ -912,12 +912,60 @@ pub struct LocalAiStatus {
     pub status: String,
     pub runner: String,
     pub preferred_model: String,
+    pub coder_model: String,
+    pub curator_model: String,
     pub models: Vec<String>,
     pub endpoint: String,
+    pub system_ram_gb: u32,
+    pub recommended_coder_model: String,
+    pub recommended_curator_model: String,
+}
+
+fn detect_system_ram_gb() -> u32 {
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(out) = std::process::Command::new("sysctl").args(["-n", "hw.memsize"]).output() {
+            if let Ok(s) = String::from_utf8(out.stdout) {
+                if let Ok(bytes) = s.trim().parse::<u64>() {
+                    return (bytes / (1024 * 1024 * 1024)) as u32;
+                }
+            }
+        }
+    }
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(meminfo) = std::fs::read_to_string("/proc/meminfo") {
+            for line in meminfo.lines() {
+                if line.starts_with("MemTotal:") {
+                    if let Some(kb_str) = line.split_whitespace().nth(1) {
+                        if let Ok(kb) = kb_str.parse::<u64>() {
+                            return (kb / (1024 * 1024)) as u32;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    16
+}
+
+fn recommend_models_for_ram(ram_gb: u32) -> (String, String) {
+    if ram_gb >= 32 {
+        ("qwen2.5-coder:32b".to_string(), "llama3.3:70b".to_string())
+    } else if ram_gb >= 16 {
+        ("qwen2.5-coder:14b".to_string(), "llama3.2:3b".to_string())
+    } else if ram_gb >= 8 {
+        ("qwen2.5-coder:7b".to_string(), "llama3.2:3b".to_string())
+    } else {
+        ("qwen2.5-coder:1.5b".to_string(), "llama3.2:1b".to_string())
+    }
 }
 
 #[tauri::command]
 pub async fn detect_local_ai() -> Result<LocalAiStatus, String> {
+    let ram_gb = detect_system_ram_gb();
+    let (rec_coder, rec_curator) = recommend_models_for_ram(ram_gb);
+
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_millis(1500))
         .build()
@@ -934,21 +982,37 @@ pub async fn detect_local_ai() -> Result<LocalAiStatus, String> {
                         }
                     }
                 }
-                let preferred = models
+
+                let coder_model = models
                     .iter()
-                    .find(|m| m.contains("coder"))
+                    .find(|m| m.contains("qwen") && m.contains("coder"))
+                    .or_else(|| models.iter().find(|m| m.contains("coder") || m.contains("codellama") || m.contains("deepseek-coder")))
                     .or_else(|| models.iter().find(|m| m.contains("qwen") || m.contains("llama")))
                     .or_else(|| models.first())
                     .cloned()
-                    .unwrap_or_else(|| "qwen2.5-coder:7b".to_string());
+                    .unwrap_or_else(|| rec_coder.clone());
+
+                let curator_model = models
+                    .iter()
+                    .find(|m| m.contains("llama3") || m.contains("llama-3"))
+                    .or_else(|| models.iter().find(|m| m.contains("qwen") && !m.contains("coder")))
+                    .or_else(|| models.iter().find(|m| m.contains("mistral") || m.contains("gemma")))
+                    .or_else(|| models.first())
+                    .cloned()
+                    .unwrap_or_else(|| coder_model.clone());
 
                 return Ok(LocalAiStatus {
                     is_running: true,
                     status: "connected".to_string(),
                     runner: "ollama".to_string(),
-                    preferred_model: preferred,
+                    preferred_model: coder_model.clone(),
+                    coder_model,
+                    curator_model,
                     models,
                     endpoint: "http://127.0.0.1:11434".to_string(),
+                    system_ram_gb: ram_gb,
+                    recommended_coder_model: rec_coder,
+                    recommended_curator_model: rec_curator,
                 });
             }
         }
@@ -966,13 +1030,29 @@ pub async fn detect_local_ai() -> Result<LocalAiStatus, String> {
                     }
                 }
                 let preferred = models.first().cloned().unwrap_or_else(|| "local-model".to_string());
+                let coder_model = models
+                    .iter()
+                    .find(|m| m.contains("coder") || m.contains("qwen"))
+                    .cloned()
+                    .unwrap_or_else(|| preferred.clone());
+                let curator_model = models
+                    .iter()
+                    .find(|m| m.contains("llama") || m.contains("instruct"))
+                    .cloned()
+                    .unwrap_or_else(|| preferred.clone());
+
                 return Ok(LocalAiStatus {
                     is_running: true,
                     status: "connected".to_string(),
                     runner: "lmstudio".to_string(),
                     preferred_model: preferred,
+                    coder_model,
+                    curator_model,
                     models,
                     endpoint: "http://127.0.0.1:1234".to_string(),
+                    system_ram_gb: ram_gb,
+                    recommended_coder_model: rec_coder,
+                    recommended_curator_model: rec_curator,
                 });
             }
         }
@@ -983,8 +1063,13 @@ pub async fn detect_local_ai() -> Result<LocalAiStatus, String> {
         status: "disconnected".to_string(),
         runner: "none".to_string(),
         preferred_model: "".to_string(),
+        coder_model: "".to_string(),
+        curator_model: "".to_string(),
         models: Vec::new(),
         endpoint: "http://127.0.0.1:11434".to_string(),
+        system_ram_gb: ram_gb,
+        recommended_coder_model: rec_coder,
+        recommended_curator_model: rec_curator,
     })
 }
 
@@ -1001,14 +1086,17 @@ pub async fn pull_local_model(app: AppHandle, model: String) -> Result<String, S
         .json(&payload)
         .send()
         .await
-        .map_err(|e| format!("Failed to initiate pull: {}", e))?;
+        .map_err(|e| format!("Failed to initiate pull (ensure Ollama is running): {}", e))?;
 
     let mut stream = response.bytes_stream();
     while let Some(item) = stream.next().await {
         if let Ok(bytes) = item {
             if let Ok(text) = std::str::from_utf8(&bytes) {
                 for line in text.lines() {
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(line) {
+                    if let Ok(mut val) = serde_json::from_str::<serde_json::Value>(line) {
+                        if let Some(obj) = val.as_object_mut() {
+                            obj.insert("model".to_string(), serde_json::Value::String(model.clone()));
+                        }
                         let _ = app.emit("ai_pull_progress", val);
                     }
                 }
@@ -1026,17 +1114,33 @@ pub async fn chat_local_ai(
     model: String,
     prompt: String,
     system: Option<String>,
+    format_schema: Option<serde_json::Value>,
+    temperature: Option<f64>,
 ) -> Result<String, String> {
     use futures_util::StreamExt;
     let req_id = request_id.unwrap_or_else(|| "default".to_string());
     let client = reqwest::Client::new();
+    let is_coder = model.contains("coder") || model.contains("codellama");
+    let default_temp = if is_coder { 0.12 } else { 0.32 };
+
     let mut payload = serde_json::json!({
         "model": model,
         "prompt": prompt,
-        "stream": true,
+        "stream": format_schema.is_none(),
+        "keep_alive": "30m",
+        "options": {
+            "temperature": temperature.unwrap_or(default_temp),
+            "num_ctx": 8192,
+            "repeat_penalty": 1.12,
+            "top_p": 0.9
+        }
     });
     if let Some(sys) = system {
         payload["system"] = serde_json::Value::String(sys);
+    }
+    if let Some(schema) = format_schema {
+        payload["format"] = schema;
+        payload["stream"] = serde_json::Value::Bool(false);
     }
 
     let response = client.post("http://127.0.0.1:11434/api/generate")
@@ -1044,6 +1148,23 @@ pub async fn chat_local_ai(
         .send()
         .await
         .map_err(|e| format!("Failed to connect to Ollama at http://127.0.0.1:11434: {}", e))?;
+
+    if payload["stream"] == serde_json::Value::Bool(false) {
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| format!("Failed to parse structured response from Ollama: {}", e))?;
+        let text = json
+            .get("response")
+            .and_then(|r| r.as_str())
+            .unwrap_or("")
+            .to_string();
+        let _ = app.emit("ai_done", serde_json::json!({
+            "requestId": req_id,
+            "content": text
+        }));
+        return Ok(text);
+    }
 
     let mut stream = response.bytes_stream();
     let mut full_text = String::new();
@@ -1072,6 +1193,122 @@ pub async fn chat_local_ai(
     }));
 
     Ok(full_text)
+}
+
+#[derive(Clone, Serialize, serde::Deserialize)]
+pub struct ProjectSnapshotMeta {
+    pub id: String,
+    pub label: String,
+    pub timestamp: u64,
+    pub file_count: usize,
+}
+
+#[tauri::command]
+pub fn save_project_snapshot(
+    slug: String,
+    label: String,
+    files: std::collections::HashMap<String, String>,
+) -> Result<ProjectSnapshotMeta, String> {
+    let safe_slug = sanitize_slug(&slug);
+    let snapshots_dir = dirs::document_dir()
+        .or_else(dirs::home_dir)
+        .ok_or("Could not locate Documents directory")?
+        .join("Pipes Projects")
+        .join(&safe_slug)
+        .join("snapshots");
+
+    std::fs::create_dir_all(&snapshots_dir).map_err(|e| e.to_string())?;
+    let canonical_dir = assert_safe_path(&snapshots_dir)?;
+
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let snap_id = format!("snap_{}", ts);
+    let snap_file = canonical_dir.join(format!("{}.json", snap_id));
+
+    let meta = ProjectSnapshotMeta {
+        id: snap_id.clone(),
+        label,
+        timestamp: ts,
+        file_count: files.len(),
+    };
+
+    let payload = serde_json::json!({
+        "meta": meta,
+        "files": files,
+    });
+
+    let serialized = serde_json::to_string_pretty(&payload).map_err(|e| e.to_string())?;
+    std::fs::write(&snap_file, serialized).map_err(|e| e.to_string())?;
+
+    Ok(meta)
+}
+
+#[tauri::command]
+pub fn list_project_snapshots(slug: String) -> Result<Vec<ProjectSnapshotMeta>, String> {
+    let safe_slug = sanitize_slug(&slug);
+    let snapshots_dir = dirs::document_dir()
+        .or_else(dirs::home_dir)
+        .ok_or("Could not locate Documents directory")?
+        .join("Pipes Projects")
+        .join(&safe_slug)
+        .join("snapshots");
+
+    if !snapshots_dir.exists() {
+        return Ok(Vec::new());
+    }
+    let canonical_dir = assert_safe_path(&snapshots_dir)?;
+    let mut list = Vec::new();
+
+    if let Ok(entries) = std::fs::read_dir(&canonical_dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.extension().and_then(|e| e.to_str()) == Some("json") {
+                if let Ok(raw) = std::fs::read_to_string(&p) {
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&raw) {
+                        if let Some(m) = val.get("meta") {
+                            if let Ok(meta) = serde_json::from_value::<ProjectSnapshotMeta>(m.clone()) {
+                                list.push(meta);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    list.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+    Ok(list)
+}
+
+#[tauri::command]
+pub fn restore_project_snapshot(
+    slug: String,
+    snapshot_id: String,
+) -> Result<std::collections::HashMap<String, String>, String> {
+    let safe_slug = sanitize_slug(&slug);
+    let safe_snap = snapshot_id
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '-')
+        .collect::<String>();
+    let snap_file = dirs::document_dir()
+        .or_else(dirs::home_dir)
+        .ok_or("Could not locate Documents directory")?
+        .join("Pipes Projects")
+        .join(&safe_slug)
+        .join("snapshots")
+        .join(format!("{}.json", safe_snap));
+
+    let canonical_file = assert_safe_path(&snap_file)?;
+    let raw = std::fs::read_to_string(&canonical_file).map_err(|e| e.to_string())?;
+    let val: serde_json::Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    let files_val = val.get("files").cloned().ok_or("Invalid snapshot format")?;
+    let files: std::collections::HashMap<String, String> =
+        serde_json::from_value(files_val).map_err(|e| e.to_string())?;
+
+    let _ = save_project_bundle(safe_slug, files.clone());
+    Ok(files)
 }
 
 #[tauri::command]
