@@ -30,7 +30,9 @@ pub fn run() {
       workflows::restore_project_snapshot,
       workflows::terminal_run,
       workflows::compute_merkle_tree,
-      workflows::transcribe_audio_file
+      workflows::transcribe_audio_file,
+      workflows::fetch_url_html_local,
+      workflows::inspect_domain_dns
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

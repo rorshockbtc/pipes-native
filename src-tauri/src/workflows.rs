@@ -1575,3 +1575,182 @@ pub async fn transcribe_audio_file(
     })
 }
 
+#[derive(Clone, Serialize)]
+pub struct LocalUrlFetchResult {
+    pub url: String,
+    pub status_code: u16,
+    pub html: String,
+    pub server_header: String,
+    pub powered_by: String,
+    pub fetched_via: String,
+}
+
+#[tauri::command]
+pub async fn fetch_url_html_local(url: String) -> Result<LocalUrlFetchResult, String> {
+    let trimmed = url.trim();
+    if trimmed.is_empty() {
+        return Err("URL cannot be empty".to_string());
+    }
+    let normalized = if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+        trimmed.to_string()
+    } else {
+        format!("https://{}", trimmed)
+    };
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_millis(7500))
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client
+        .get(&normalized)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .send()
+        .await
+        .map_err(|e| format!("Local residential HTTP fetch failed for {}: {}", normalized, e))?;
+
+    let status_code = resp.status().as_u16();
+    let server_header = resp
+        .headers()
+        .get("server")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    let powered_by = resp
+        .headers()
+        .get("x-powered-by")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+
+    let html = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed reading HTML body: {}", e))?;
+
+    let capped_html = if html.len() > 350_000 {
+        html.chars().take(350_000).collect()
+    } else {
+        html
+    };
+
+    Ok(LocalUrlFetchResult {
+        url: normalized,
+        status_code,
+        html: capped_html,
+        server_header,
+        powered_by,
+        fetched_via: "Native Residential IP (Zero Cloud Proxy)".to_string(),
+    })
+}
+
+#[derive(Clone, Serialize)]
+pub struct DomainDnsReport {
+    pub domain: String,
+    pub mx_records: Vec<String>,
+    pub txt_records: Vec<String>,
+    pub a_records: Vec<String>,
+    pub cname_records: Vec<String>,
+    pub email_provider: String,
+    pub has_spf: bool,
+    pub safety_summary: String,
+}
+
+async fn query_doh_records(client: &reqwest::Client, name: &str, record_type: &str) -> Vec<String> {
+    let url = format!(
+        "https://cloudflare-dns.com/dns-query?name={}&type={}",
+        name, record_type
+    );
+    let mut out = Vec::new();
+    if let Ok(resp) = client
+        .get(&url)
+        .header("Accept", "application/dns-json")
+        .send()
+        .await
+    {
+        if let Ok(json) = resp.json::<serde_json::Value>().await {
+            if let Some(answers) = json.get("Answer").and_then(|a| a.as_array()) {
+                for ans in answers {
+                    if let Some(data) = ans.get("data").and_then(|d| d.as_str()) {
+                        out.push(data.trim_matches('"').to_string());
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
+#[tauri::command]
+pub async fn inspect_domain_dns(domain: String) -> Result<DomainDnsReport, String> {
+    let clean_domain = domain
+        .trim()
+        .trim_start_matches("https://")
+        .trim_start_matches("http://")
+        .trim_start_matches("www.")
+        .split('/')
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_lowercase();
+
+    if clean_domain.is_empty() || !clean_domain.contains('.') {
+        return Err("Please enter a valid domain name (e.g. mybusiness.com)".to_string());
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_millis(4500))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let mx_records = query_doh_records(&client, &clean_domain, "MX").await;
+    let txt_records = query_doh_records(&client, &clean_domain, "TXT").await;
+    let a_records = query_doh_records(&client, &clean_domain, "A").await;
+    let cname_records = query_doh_records(&client, &format!("www.{}", clean_domain), "CNAME").await;
+
+    let mx_joined = mx_records.join(" ").to_lowercase();
+    let txt_joined = txt_records.join(" ").to_lowercase();
+
+    let email_provider = if mx_joined.contains("google") || mx_joined.contains("aspmx.l.google.com") {
+        "Google Workspace (Gmail Business)".to_string()
+    } else if mx_joined.contains("outlook.com") || mx_joined.contains("protection.outlook.com") {
+        "Microsoft 365 (Exchange Online)".to_string()
+    } else if mx_joined.contains("protonmail") || mx_joined.contains("proton.ch") {
+        "Proton Mail Business".to_string()
+    } else if mx_joined.contains("zoho") {
+        "Zoho Mail".to_string()
+    } else if mx_joined.contains("secureserver.net") {
+        "GoDaddy Email".to_string()
+    } else if !mx_records.is_empty() {
+        "Custom Active Mail Server (MX Present)".to_string()
+    } else {
+        "No Active MX Records Detected".to_string()
+    };
+
+    let has_spf = txt_joined.contains("v=spf1");
+
+    let safety_summary = if !mx_records.is_empty() {
+        format!(
+            "Detected {} ({} MX record{}). DO NOT change your nameservers or touch MX/TXT records. Update ONLY the A (@) and CNAME (www) records to guarantee 0% email downtime.",
+            email_provider,
+            mx_records.len(),
+            if mx_records.len() == 1 { "" } else { "s" }
+        )
+    } else {
+        "No MX email records found on this root domain. Safe to point A (@) and CNAME (www) directly to Cloudflare Pages or Vercel.".to_string()
+    };
+
+    Ok(DomainDnsReport {
+        domain: clean_domain,
+        mx_records,
+        txt_records,
+        a_records,
+        cname_records,
+        email_provider,
+        has_spf,
+        safety_summary,
+    })
+}
+
+
