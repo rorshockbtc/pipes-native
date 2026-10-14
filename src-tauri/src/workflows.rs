@@ -183,6 +183,8 @@ pub struct HydratedPipe {
     pub description: String,
     pub stars: u64,
     pub default_branch: String,
+    pub license_spdx: String,
+    pub compliance_summary: String,
 }
 
 fn validate_github_url(url: &str) -> Result<(String, String), String> {
@@ -237,6 +239,7 @@ pub async fn hydrate_github_repo(url: String) -> Result<HydratedPipe, String> {
     let mut description = format!("Sovereign repository by @{}", author);
     let mut stars = 0u64;
     let mut default_branch = "main".to_string();
+    let mut license_spdx = "MIT".to_string();
 
     if let Ok(client) = reqwest::Client::builder()
         .user_agent("Pipes-Sovereign-Desktop/0.1.0")
@@ -258,10 +261,35 @@ pub async fn hydrate_github_repo(url: String) -> Result<HydratedPipe, String> {
                     if let Some(b) = json.get("default_branch").and_then(|v| v.as_str()) {
                         default_branch = b.to_string();
                     }
+                    if let Some(lic) = json
+                        .get("license")
+                        .and_then(|l| l.get("spdx_id"))
+                        .and_then(|s| s.as_str())
+                    {
+                        if !lic.trim().is_empty() && lic != "NOASSERTION" {
+                            license_spdx = lic.to_string();
+                        }
+                    }
                 }
             }
         }
     }
+
+    let compliance_summary = match license_spdx.as_str() {
+        "MIT" | "ISC" | "BSD-2-Clause" | "BSD-3-Clause" | "0BSD" | "Unlicense" | "CC0-1.0" => {
+            format!("{} Permissive · Commercial & Closed/Open Use Approved · Attribution Required", license_spdx)
+        }
+        "Apache-2.0" => {
+            "Apache-2.0 · Permissive Commercial Use + Explicit Patent Grant".to_string()
+        }
+        "MPL-2.0" | "LGPL-2.1" | "LGPL-3.0" => {
+            format!("{} Weak Copyleft · File/Library-level modifications must remain open; safe to link commercially", license_spdx)
+        }
+        "GPL-3.0" | "GPL-2.0" | "AGPL-3.0" => {
+            format!("{} Strong Copyleft · Derivative distributions must disclose source under same license", license_spdx)
+        }
+        _ => format!("{} · Verify upstream LICENSE file before commercial redistribution", license_spdx),
+    };
 
     Ok(HydratedPipe {
         namespace,
@@ -281,6 +309,8 @@ pub async fn hydrate_github_repo(url: String) -> Result<HydratedPipe, String> {
         description,
         stars,
         default_branch,
+        license_spdx,
+        compliance_summary,
     })
 }
 
