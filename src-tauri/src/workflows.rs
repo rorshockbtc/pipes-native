@@ -708,6 +708,174 @@ pub fn list_workspace_files() -> Result<Vec<WorkspaceFileInfo>, String> {
     Ok(results)
 }
 
+#[tauri::command]
+pub fn load_saved_project(slug: String) -> Result<std::collections::HashMap<String, String>, String> {
+    let safe_slug = sanitize_slug(&slug);
+    let project_dir = dirs::document_dir()
+        .or_else(dirs::home_dir)
+        .ok_or("Could not locate Documents directory")?
+        .join("Pipes Projects")
+        .join(&safe_slug);
+
+    if !project_dir.exists() {
+        return Err(format!("Saved project '{}' does not exist", safe_slug));
+    }
+    let canonical = assert_safe_path(&project_dir)?;
+    let mut files = std::collections::HashMap::new();
+
+    if let Ok(entries) = std::fs::read_dir(&canonical) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_file() {
+                let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                if name.starts_with('.') {
+                    continue;
+                }
+                if let Ok(content) = std::fs::read_to_string(&p) {
+                    files.insert(name, content);
+                }
+            }
+        }
+    }
+
+    Ok(files)
+}
+
+#[derive(Clone, Serialize)]
+pub struct LocalPreviewServerInfo {
+    pub url: String,
+    pub port: u16,
+    pub project_path: String,
+}
+
+lazy_static::lazy_static! {
+    static ref ACTIVE_PREVIEW_DIR: Mutex<Option<std::path::PathBuf>> = Mutex::new(None);
+    static ref PREVIEW_SERVER_PORT: Mutex<Option<u16>> = Mutex::new(None);
+}
+
+#[tauri::command]
+pub fn open_external_url(url: String) -> Result<String, String> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("Only http:// and https:// URLs are permitted".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    let _ = std::process::Command::new("open").arg(&url).status();
+
+    #[cfg(target_os = "windows")]
+    let _ = std::process::Command::new("cmd").args(["/C", "start", "", &url]).status();
+
+    #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+    let _ = std::process::Command::new("xdg-open").arg(&url).status();
+
+    Ok(url)
+}
+
+#[tauri::command]
+pub fn start_local_preview_server(slug: String, open_browser: Option<bool>) -> Result<LocalPreviewServerInfo, String> {
+    use std::io::{Read, Write};
+
+    let safe_slug = sanitize_slug(&slug);
+    let project_dir = dirs::document_dir()
+        .or_else(dirs::home_dir)
+        .ok_or("Could not locate Documents directory")?
+        .join("Pipes Projects")
+        .join(&safe_slug);
+
+    std::fs::create_dir_all(&project_dir).map_err(|e| e.to_string())?;
+    let canonical_dir = assert_safe_path(&project_dir)?;
+
+    {
+        if let Ok(mut guard) = ACTIVE_PREVIEW_DIR.lock() {
+            *guard = Some(canonical_dir.clone());
+        }
+    }
+
+    let existing_port = PREVIEW_SERVER_PORT.lock().ok().and_then(|g| *g);
+    let bound_port = if let Some(p) = existing_port {
+        p
+    } else {
+        let listener = std::net::TcpListener::bind("127.0.0.1:4321")
+            .or_else(|_| std::net::TcpListener::bind("127.0.0.1:4322"))
+            .or_else(|_| std::net::TcpListener::bind("127.0.0.1:0"))
+            .map_err(|e| format!("Could not bind localhost preview server: {}", e))?;
+
+        let port = listener.local_addr().map(|a| a.port()).unwrap_or(4321);
+        if let Ok(mut g) = PREVIEW_SERVER_PORT.lock() {
+            *g = Some(port);
+        }
+
+        thread::spawn(move || {
+            for stream in listener.incoming().flatten() {
+                let mut stream = stream;
+                let mut buf = [0u8; 4096];
+                let n = stream.read(&mut buf).unwrap_or(0);
+                if n == 0 {
+                    continue;
+                }
+                let req = String::from_utf8_lossy(&buf[..n]);
+                let first_line = req.lines().next().unwrap_or("GET / HTTP/1.1");
+                let raw_path = first_line.split_whitespace().nth(1).unwrap_or("/");
+                let clean_path = raw_path.split('?').next().unwrap_or("/").trim_start_matches('/');
+                let rel_file = if clean_path.is_empty() { "index.html" } else { clean_path };
+
+                let root = ACTIVE_PREVIEW_DIR
+                    .lock()
+                    .ok()
+                    .and_then(|g| g.clone())
+                    .unwrap_or_else(|| std::path::PathBuf::from("."));
+
+                let candidate = if rel_file.contains("..") {
+                    root.join("index.html")
+                } else {
+                    let c = root.join(rel_file);
+                    if c.exists() && c.is_file() {
+                        c
+                    } else {
+                        root.join("index.html")
+                    }
+                };
+
+                let content_type = if candidate.extension().and_then(|e| e.to_str()) == Some("css") {
+                    "text/css; charset=utf-8"
+                } else if candidate.extension().and_then(|e| e.to_str()) == Some("json") {
+                    "application/json; charset=utf-8"
+                } else if candidate.extension().and_then(|e| e.to_str()) == Some("js") {
+                    "application/javascript; charset=utf-8"
+                } else {
+                    "text/html; charset=utf-8"
+                };
+
+                let body = std::fs::read(&candidate).unwrap_or_else(|_| {
+                    b"<!doctype html><html><body style='font-family:sans-serif;padding:3rem;background:#FAF8F5;color:#111827'><h1>Pipes Localhost Server</h1><p>Click 'Publish Live' or select a template in Bang to generate index.html.</p></body></html>".to_vec()
+                });
+
+                let header = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: {}\r\nContent-Length: {}\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n",
+                    content_type,
+                    body.len()
+                );
+                let _ = stream.write_all(header.as_bytes());
+                let _ = stream.write_all(&body);
+                let _ = stream.flush();
+            }
+        });
+
+        port
+    };
+
+    let url = format!("http://localhost:{}", bound_port);
+    if open_browser.unwrap_or(true) {
+        let _ = open_external_url(url.clone());
+    }
+
+    Ok(LocalPreviewServerInfo {
+        url,
+        port: bound_port,
+        project_path: canonical_dir.to_string_lossy().to_string(),
+    })
+}
+
 #[derive(Clone, Serialize)]
 pub struct LocalAiStatus {
     pub is_running: bool,
