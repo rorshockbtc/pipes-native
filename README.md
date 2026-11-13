@@ -14,11 +14,13 @@ Pipes Native is a lightweight desktop application engineered to turn any persona
    - Consumes **0 tokens** and requires **0 external cloud network requests**.
 
 2. **Hardened Native Filesystem Sandboxing**
-   - Native Rust backend (Tauri v2) strictly confines all folder watching and file reads to authorized user directories:
+   - Native Rust backend (Tauri v2) strictly confines all folder watching and file writes to authorized user directories:
      - `~/Documents/Pipes Projects`
      - `~/Documents/Pipes Drafts`
+     - `~/Documents/Marigold_Local`
      - `~/.pipes`
    - Canonical path resolution enforces strict denial of sensitive credential files (`.ssh`, `.aws`, `.env`, `id_rsa`).
+   - Out-of-core Rust streaming (`marigold_stream_profile_dataset`, `marigold_shard_massive_archive`) processes 4GB+ `.zip`, `.txt`, `.tsv`, and `.csv` voter and fiscal datasets in `O(1)` memory without hitting browser `wasm32` memory ceilings.
 
 3. **The Tap-Out Protocol**
    - Unlike bloated AI desktop applications that attempt to download 8GB local model weights and freeze machines, Pipes stays lean (<15MB binary).
@@ -26,9 +28,16 @@ Pipes Native is a lightweight desktop application engineered to turn any persona
      - **1-Click Frontier Escalation**: Formats an un-corrupted diff context packet to paste directly into Claude, DeepSeek, or ChatGPT for free.
      - **BYOK (Bring Your Own Key)**: Direct local API key dispatch (Anthropic/OpenAI) or local Ollama endpoint (`http://localhost:11434`), stored strictly in OS memory without passing through centralized servers.
 
-4. **Curator & Developer Dual-Persona Engine**
-   - **Curator Mode 🌿**: Plain-English interface displaying living primary-source monographs, citation trust scores, and in-memory table previews for researchers and non-technical curators.
-   - **Developer Mode ⚡**: Full code editor, syntax highlighting, AST mutation logs, and live daemon terminal for software engineers.
+4. **Three-Persona Sovereign Engine**
+   - **Curator Mode 🌿** (`/curate`): Plain-English interface displaying living primary-source monographs, citation trust scores, and in-memory table previews for researchers and non-technical curators.
+   - **Civic Data Mode 🌼 (Marigold)** (`/desktop/marigold`): Out-of-core 4GB+ statewide archive sharding, Merkle SHA-256 verification, and DuckDB-Wasm civic ledger analysis.
+   - **Developer Mode ⚡ (Bang)** (`/desktop/bang`): Full code editor, syntax highlighting, AST mutation logs, and live daemon terminal for software engineers.
+
+5. **B2G Air-Gapped Build Profile**
+   - For county clerks or offline institutional deployments requiring zero external connections, build directly from the unified codebase using:
+     ```bash
+     npx tauri build --config src-tauri/tauri.marigold-airgap.conf.json
+     ```
 
 ---
 

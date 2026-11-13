@@ -96,7 +96,7 @@ pub fn stop_watching() -> Result<String, String> {
     Ok("Stopped watching folder".to_string())
 }
 
-fn assert_safe_path(target_path: &Path) -> Result<std::path::PathBuf, String> {
+pub(crate) fn assert_safe_path(target_path: &Path) -> Result<std::path::PathBuf, String> {
     let canonical = target_path.canonicalize().map_err(|e| format!("Path cannot be resolved: {}", e))?;
     
     // Disallow dotfiles or sensitive credentials (.ssh, .aws, .env, id_rsa, etc.)
@@ -117,9 +117,11 @@ fn assert_safe_path(target_path: &Path) -> Result<std::path::PathBuf, String> {
     let allowed_roots = [
         dirs::document_dir().map(|d| d.join("Pipes Projects")),
         dirs::document_dir().map(|d| d.join("Pipes Drafts")),
+        dirs::document_dir().map(|d| d.join("Marigold_Local")),
         dirs::home_dir().map(|h| h.join(".pipes")),
         dirs::home_dir().map(|h| h.join("Documents").join("Pipes Projects")),
         dirs::home_dir().map(|h| h.join("Documents").join("Pipes Drafts")),
+        dirs::home_dir().map(|h| h.join("Documents").join("Marigold_Local")),
     ];
 
     let mut is_allowed = false;

@@ -1,3 +1,4 @@
+mod marigold;
 mod workflows;
 
 use tauri::Manager;
@@ -32,7 +33,11 @@ pub fn run() {
       workflows::compute_merkle_tree,
       workflows::transcribe_audio_file,
       workflows::fetch_url_html_local,
-      workflows::inspect_domain_dns
+      workflows::inspect_domain_dns,
+      marigold::marigold_native_capabilities,
+      marigold::marigold_list_local_datasets,
+      marigold::marigold_stream_profile_dataset,
+      marigold::marigold_shard_massive_archive
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {
@@ -45,7 +50,7 @@ pub fn run() {
 
       // Smart Online / Local / Offline Boot Probe:
       // 1. If local dev server (localhost:3000) is running and debug_assertions is enabled, prefer it.
-      // 2. Otherwise verify https://www.pipes.pink/desktop/bang is reachable.
+      // 2. Otherwise verify https://www.pipes.pink/curate is reachable (DesktopEnvironmentWrapper routes to saved preference: curate | marigold | bang).
       // 3. If offline (airplane mode / no network), fall back to the bundled local studio (index.html).
       let app_handle = app.handle().clone();
       tauri::async_runtime::spawn(async move {
@@ -58,10 +63,10 @@ pub fn run() {
         };
 
         if cfg!(debug_assertions) {
-          if let Ok(resp) = client.get("http://localhost:3000/desktop/bang").send().await {
+          if let Ok(resp) = client.get("http://localhost:3000/curate").send().await {
             if resp.status().is_success() {
               if let Some(win) = app_handle.get_webview_window("main") {
-                if let Ok(url) = "http://localhost:3000/desktop/bang".parse() {
+                if let Ok(url) = "http://localhost:3000/curate".parse() {
                   let _ = win.navigate(url);
                   return;
                 }
@@ -70,21 +75,21 @@ pub fn run() {
           }
         }
 
-        let online_ok = match client.get("https://www.pipes.pink/desktop/bang").send().await {
+        let online_ok = match client.get("https://www.pipes.pink/curate").send().await {
           Ok(resp) => resp.status().is_success(),
           Err(_) => false,
         };
 
         if !online_ok {
           // Try localhost:3000 even in release if developer has local server running while offline
-          let local_ok = match client.get("http://localhost:3000/desktop/bang").send().await {
+          let local_ok = match client.get("http://localhost:3000/curate").send().await {
             Ok(resp) => resp.status().is_success(),
             Err(_) => false,
           };
 
           if let Some(win) = app_handle.get_webview_window("main") {
             let fallback_target = if local_ok {
-              "http://localhost:3000/desktop/bang"
+              "http://localhost:3000/curate"
             } else {
               "tauri://localhost/index.html"
             };

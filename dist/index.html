@@ -489,6 +489,7 @@
       
       <div class="persona-toggle">
         <button class="persona-btn active" id="btnPersonaCurator" onclick="setPersona('curator')">🌿 Curator</button>
+        <button class="persona-btn" id="btnPersonaCivic" onclick="setPersona('civic')">🌼 Civic Data</button>
         <button class="persona-btn" id="btnPersonaDev" onclick="setPersona('dev')">⚡ Developer</button>
       </div>
     </div>
@@ -529,6 +530,11 @@
           <span>🤖</span>
           <span>Local AI Copilot</span>
           <span class="nav-badge" id="aiModelBadge">Ollama</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('marigold')">
+          <span>🌼</span>
+          <span>Civic Data Studio</span>
+          <span class="nav-badge">4GB+</span>
         </div>
         <div class="nav-item" onclick="switchTab('audio')">
           <span>🎙️</span>
@@ -757,6 +763,47 @@
         </div>
       </section>
 
+      <!-- 7. CIVIC DATA (MARIGOLD) OUT-OF-CORE VIEW -->
+      <section class="view-panel" id="viewMarigold">
+        <div class="studio-header">
+          <div>
+            <div class="studio-title"><span>🌼</span> Marigold Civic Data Studio (O(1) Rust Streaming)</div>
+            <div class="studio-desc" style="font-size: 13px;">Stream &amp; shard 4GB+ statewide .zip, .txt, and .csv archives with zero cloud uploads and zero WASM memory ceiling.</div>
+          </div>
+          <button class="btn btn-sm" style="font-size: 13px;" onclick="refreshCivicDatasets()">Scan Local Vault ↻</button>
+        </div>
+
+        <div class="studio-content" style="overflow-y: auto; gap: 14px; display: flex; flex-direction: column;">
+          <div class="card-banner" style="margin-bottom: 0; flex-wrap: wrap; gap: 12px;">
+            <div style="flex: 1; min-width: 260px;">
+              <label for="civicDatasetPath" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px;">Local Archive Path (Downloads / Desktop / ~/Documents/Marigold_Local)</label>
+              <input type="text" id="civicDatasetPath" class="chat-input" style="width: 100%; font-size: 13px; font-family: var(--font-mono);" placeholder="~/Downloads/ncvoter_Statewide.zip" />
+            </div>
+            <div style="width: 190px;">
+              <label for="civicGroupCol" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px;">Aggregate Column</label>
+              <input type="text" id="civicGroupCol" class="chat-input" style="width: 100%; font-size: 13px; font-family: var(--font-mono);" placeholder="county_desc" />
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-end;">
+              <button class="btn btn-primary" style="font-size: 13px;" onclick="runCivicStreamProfile()">Stream Zero-PII Profile</button>
+              <button class="btn" style="font-size: 13px;" onclick="runCivicShardArchive()">Shard 250k Vault</button>
+            </div>
+          </div>
+
+          <div class="explorer-grid" style="min-height: 280px;">
+            <div class="explorer-filelist" id="civicDatasetList">
+              <div style="font-size: 13px; color: var(--text-muted); padding: 8px;">Scanning ~/Documents/Marigold_Local and ~/Downloads...</div>
+            </div>
+            <div class="editor-wrapper">
+              <div class="editor-toolbar" style="font-size: 13px;">
+                <span id="civicStatusLabel">Zero-PII Streaming Summary &amp; Merkle Manifest</span>
+                <span id="civicElapsedLabel">Ready</span>
+              </div>
+              <textarea class="editor-textarea" id="civicOutputBox" readonly style="font-size: 13px;" placeholder="Select a .zip, .txt, or .csv file on the left or enter a path above, then click Stream Zero-PII Profile or Shard 250k Vault..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -820,13 +867,20 @@
 
       if (tabId === 'merkle') generateMerkleTree();
       if (tabId === 'explorer') refreshWorkspace();
+      if (tabId === 'marigold') refreshCivicDatasets();
     }
 
     function setPersona(persona) {
       currentPersona = persona;
       document.getElementById('btnPersonaCurator').classList.toggle('active', persona === 'curator');
+      document.getElementById('btnPersonaCivic').classList.toggle('active', persona === 'civic');
       document.getElementById('btnPersonaDev').classList.toggle('active', persona === 'dev');
       document.getElementById('devNavSection').style.display = (persona === 'dev') ? 'block' : 'none';
+      if (persona === 'civic') {
+        switchTab('marigold');
+      } else if (persona === 'curator' && activeTab === 'marigold') {
+        switchTab('explorer');
+      }
     }
 
     // --- Workspace Files ---
@@ -1198,7 +1252,88 @@ Please provide an architectural refactor adhering to sovereign Sandstone design 
     }
 
     function openCloudWorkspace() {
-      window.open('https://www.pipes.pink/desktop/bang', '_blank');
+      window.open('https://www.pipes.pink/curate', '_blank');
+    }
+
+    // --- Marigold Civic Data Out-of-Core Studio ---
+    async function refreshCivicDatasets() {
+      const container = document.getElementById('civicDatasetList');
+      if (!container) return;
+      container.innerHTML = '<div style="font-size:13px; color:var(--text-muted); padding:8px;">Scanning Downloads &amp; Marigold_Local...</div>';
+      try {
+        const datasets = await invokeTauri('marigold_list_local_datasets');
+        container.innerHTML = '';
+        if (!datasets || datasets.length === 0) {
+          container.innerHTML = '<div style="font-size:13px; color:var(--text-muted); padding:8px;">No .zip, .csv, .tsv, or .txt files detected in ~/Downloads or ~/Documents/Marigold_Local.</div>';
+          return;
+        }
+        datasets.forEach((d) => {
+          const mb = (Number(d.sizeBytes || 0) / (1024 * 1024)).toFixed(1);
+          const row = document.createElement('div');
+          row.className = 'file-row';
+          row.style.fontSize = '13px';
+          row.innerHTML = `<span>${d.extension === 'zip' ? '🗜️' : '📊'}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.name} (${mb} MB · ${d.location})</span>`;
+          row.onclick = () => {
+            document.getElementById('civicDatasetPath').value = d.path;
+          };
+          container.appendChild(row);
+        });
+      } catch (err) {
+        container.innerHTML = `<div style="font-size:13px; color:var(--accent); padding:8px;">Scan error: ${err}</div>`;
+      }
+    }
+
+    async function runCivicStreamProfile() {
+      const pathVal = document.getElementById('civicDatasetPath').value.trim();
+      const groupCol = document.getElementById('civicGroupCol').value.trim() || null;
+      const out = document.getElementById('civicOutputBox');
+      const status = document.getElementById('civicElapsedLabel');
+      if (!pathVal) {
+        out.value = 'Enter or select a dataset path first (e.g. ~/Downloads/ncvoter_Statewide.zip).';
+        return;
+      }
+      status.innerText = 'Streaming O(1) RAM...';
+      out.value = 'Streaming file bytes & hashing SHA-256 in Rust background thread...\nZero bytes leave this machine.';
+      try {
+        const res = await invokeTauri('marigold_stream_profile_dataset', {
+          path: pathVal,
+          delimiter: null,
+          groupByCol: groupCol
+        });
+        if (res) {
+          status.innerText = `Complete in ${res.elapsedMs}ms`;
+          out.value = JSON.stringify(res, null, 2);
+        }
+      } catch (err) {
+        status.innerText = 'Failed';
+        out.value = `Streaming profile error: ${err}`;
+      }
+    }
+
+    async function runCivicShardArchive() {
+      const pathVal = document.getElementById('civicDatasetPath').value.trim();
+      const out = document.getElementById('civicOutputBox');
+      const status = document.getElementById('civicElapsedLabel');
+      if (!pathVal) {
+        out.value = 'Enter or select a dataset path first.';
+        return;
+      }
+      status.innerText = 'Sharding 250k rows...';
+      out.value = 'Streaming archive directly into ~/Documents/Marigold_Local/ Merkle shards...';
+      try {
+        const manifest = await invokeTauri('marigold_shard_massive_archive', {
+          path: pathVal,
+          rowsPerShard: 250000,
+          outputSubdir: null
+        });
+        if (manifest) {
+          status.innerText = `${manifest.shardCount} shards in ${manifest.elapsedMs}ms`;
+          out.value = JSON.stringify(manifest, null, 2);
+        }
+      } catch (err) {
+        status.innerText = 'Failed';
+        out.value = `Sharding error: ${err}`;
+      }
     }
 
     // Keyboard Shortcuts (Cmd+S / Ctrl+S)

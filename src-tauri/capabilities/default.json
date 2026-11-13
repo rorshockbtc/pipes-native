@@ -5,7 +5,10 @@
     "urls": [
       "https://*.pipes.pink/*",
       "https://pipes.pink/*",
-      "http://localhost:3000/*"
+      "https://*.marigoldinsights.org/*",
+      "https://marigoldinsights.org/*",
+      "http://localhost:3000/*",
+      "http://localhost:3001/*"
     ]
   },
   "windows": [
