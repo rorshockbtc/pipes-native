@@ -1,6 +1,6 @@
 {
   "name": "pipes-native",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sovereign desktop node and Bang IDE for Pipes Protocol (Mac & Windows)",
   "private": true,
   "scripts": {

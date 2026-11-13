@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Pipes Civic AirGap",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "pink.pipes.marigold.airgap",
   "build": {
     "frontendDist": "../dist"

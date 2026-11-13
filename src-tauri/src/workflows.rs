@@ -244,7 +244,7 @@ pub async fn hydrate_github_repo(url: String) -> Result<HydratedPipe, String> {
     let mut license_spdx = "MIT".to_string();
 
     if let Ok(client) = reqwest::Client::builder()
-        .user_agent("Pipes-Sovereign-Desktop/0.1.0")
+        .user_agent("Pipes-Sovereign-Desktop/0.1.1")
         .timeout(std::time::Duration::from_millis(2500))
         .build()
     {

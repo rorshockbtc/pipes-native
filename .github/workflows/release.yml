@@ -19,6 +19,9 @@ jobs:
           - os: macos-latest
             args: --target aarch64-apple-darwin
             rust_targets: aarch64-apple-darwin
+          - os: macos-latest
+            args: --target x86_64-apple-darwin
+            rust_targets: x86_64-apple-darwin
           - os: windows-latest
             args: ''
             rust_targets: ''
@@ -48,7 +51,20 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Pipes Desktop ${{ github.ref_name }}'
-          releaseBody: 'Unsigned preview build. On macOS open System Settings > Privacy & Security and choose Open Anyway the first time. On Windows choose More info > Run anyway if SmartScreen appears.'
+          releaseBody: |
+            ## Pipes Desktop ${{ github.ref_name }}
+
+            **Three Sovereign Workstations in One `<15MB` Native Binary:**
+            - **Curator Mode** (`/curate`): Personal reading desk, Merkle-verified knowledge base, and local Ollama synthesis.
+            - **Marigold Data & Civic Studio** (`/desktop/marigold`): Native Rust `O(1)` out-of-core `.zip`, `.tsv`, `.txt`, and `.csv` streaming profiler & 250k-row Merkle sharder (`~/Documents/Marigold_Local`) bypassing browser WebAssembly's 4 GB limit.
+            - **Bang Studio** (`/desktop/bang`): Local AI IDE, zero-cloud code harness, and workspace terminal.
+
+            ### Downloads
+            - **macOS (Apple Silicon M1–M4)**: `Pipes_0.1.1_aarch64.dmg`
+            - **macOS (Intel)**: `Pipes_0.1.1_x64.dmg`
+            - **Windows (x64)**: `Pipes_0.1.1_x64-setup.exe` or `.msi`
+
+            > Unsigned preview build. On macOS open **System Settings > Privacy & Security** and choose **Open Anyway** (or right-click `Pipes.app` -> **Open**) the first time. On Windows choose **More info > Run anyway** if SmartScreen appears.
           releaseDraft: false
-          prerelease: true
+          prerelease: false
           args: ${{ matrix.args }}
